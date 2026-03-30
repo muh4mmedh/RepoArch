@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user information and GitHub connection status.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "githubAccessToken": { "type": "string", "description": "Encrypted GitHub access token" },
+        "githubUsername": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "createdAt"]
+    },
+    "RepositoryAnalysis": {
+      "title": "Repository Analysis",
+      "description": "Stores the generated architecture analysis for a repository.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner UID" },
+        "repoName": { "type": "string" },
+        "repoFullName": { "type": "string" },
+        "repoUrl": { "type": "string" },
+        "analysisHtml": { "type": "string", "description": "Generated architecture documentation" },
+        "analysisMarkdown": { "type": "string" },
+        "summary": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "repoFullName", "analysisMarkdown", "createdAt"]
+    },
+    "AnalysisChat": {
+      "title": "Analysis Chat",
+      "description": "Stores chat messages related to a specific repository analysis.",
+      "type": "object",
+      "properties": {
+        "analysisId": { "type": "string" },
+        "uid": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "assistant"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["analysisId", "uid", "role", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "UserProfile",
+      "description": "User profile documents"
+    },
+    "/analyses/{analysisId}": {
+      "schema": "RepositoryAnalysis",
+      "description": "Repository analysis results"
+    },
+    "/analyses/{analysisId}/messages/{messageId}": {
+      "schema": "AnalysisChat",
+      "description": "Chat messages for a specific analysis"
+    }
+  }
+}

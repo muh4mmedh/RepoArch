@@ -1,0 +1,5 @@
+{
+  "name": "RepoArch AI",
+  "description": "Analyze your GitHub repositories and generate comprehensive system architecture documentation with AI.",
+  "requestFramePermissions": []
+}

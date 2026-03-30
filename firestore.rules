@@ -1,0 +1,45 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+    function isValidUser(data) {
+      return data.uid is string && data.createdAt is string;
+    }
+    function isValidAnalysis(data) {
+      return data.uid is string && data.repoFullName is string && data.analysisMarkdown is string;
+    }
+    function isValidMessage(data) {
+      return data.uid is string && data.analysisId is string && data.role in ['user', 'assistant'];
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(request.resource.data);
+      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+    }
+
+    // Repository analyses
+    match /analyses/{analysisId} {
+      allow read: if isDocOwner();
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid && isValidAnalysis(request.resource.data);
+      allow update: if isDocOwner() && isValidAnalysis(request.resource.data);
+      allow delete: if isDocOwner();
+
+      // Chat messages subcollection
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && get(/databases/$(database)/documents/analyses/$(analysisId)).data.uid == request.auth.uid;
+        allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid && isValidMessage(request.resource.data);
+      }
+    }
+  }
+}
