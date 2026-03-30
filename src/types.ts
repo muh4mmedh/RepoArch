@@ -2,6 +2,8 @@ export type AIProvider = 'gemini' | 'openai' | 'anthropic';
 
 export interface AISettings {
   provider: AIProvider;
+  model?: string;
+  autoSelectModel: boolean;
   geminiKey?: string;
   openaiKey?: string;
   anthropicKey?: string;

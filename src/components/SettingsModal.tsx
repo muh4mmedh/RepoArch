@@ -12,9 +12,17 @@ interface SettingsModalProps {
 
 const DEFAULT_SETTINGS: AISettings = {
   provider: 'gemini',
+  model: 'gemini-3.1-pro-preview',
+  autoSelectModel: true,
   temperature: 0.7,
   maxTokens: 2048,
   rateLimit: 10
+};
+
+const PROVIDER_MODELS: Record<AIProvider, string[]> = {
+  gemini: ['gemini-3.1-pro-preview', 'gemini-3.1-flash-preview', 'gemini-3.1-flash-lite-preview'],
+  openai: ['gpt-4o', 'gpt-4o-mini', 'o1-preview'],
+  anthropic: ['claude-3-5-sonnet-latest', 'claude-3-opus-latest', 'claude-3-haiku-latest']
 };
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings, onSave }) => {
@@ -66,7 +74,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                   {(['gemini', 'openai', 'anthropic'] as AIProvider[]).map((p) => (
                     <button
                       key={p}
-                      onClick={() => setLocalSettings({ ...localSettings, provider: p })}
+                      onClick={() => setLocalSettings({ 
+                        ...localSettings, 
+                        provider: p,
+                        model: PROVIDER_MODELS[p][0]
+                      })}
                       className={`py-3 px-4 rounded-2xl border-2 text-sm font-bold transition-all ${
                         localSettings.provider === p 
                           ? 'border-black bg-black text-white shadow-lg' 
@@ -77,6 +89,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                     </button>
                   ))}
                 </div>
+              </section>
+
+              {/* Model Selection */}
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-widest text-gray-400 block">Model Selection</label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase">Auto-Select</span>
+                    <button 
+                      onClick={() => setLocalSettings({ ...localSettings, autoSelectModel: !localSettings.autoSelectModel })}
+                      className={`w-10 h-5 rounded-full transition-colors relative ${localSettings.autoSelectModel ? 'bg-black' : 'bg-gray-200'}`}
+                    >
+                      <motion.div 
+                        animate={{ x: localSettings.autoSelectModel ? 20 : 2 }}
+                        className="absolute top-1 w-3 h-3 bg-white rounded-full"
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {!localSettings.autoSelectModel && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <select 
+                        value={localSettings.model}
+                        onChange={(e) => setLocalSettings({ ...localSettings, model: e.target.value })}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 px-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-black/5 focus:border-black transition-all appearance-none"
+                      >
+                        {PROVIDER_MODELS[localSettings.provider].map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </section>
 
               {/* API Keys */}

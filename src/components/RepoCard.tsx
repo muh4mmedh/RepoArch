@@ -1,5 +1,5 @@
 import React from 'react';
-import { Github, Lock, Globe, ArrowRight, Clock, Code } from 'lucide-react';
+import { Github, Lock, Globe, ArrowRight, Clock, Code, Loader2 } from 'lucide-react';
 import { Repository } from '../types';
 import { motion } from 'motion/react';
 
@@ -49,8 +49,17 @@ export const RepoCard: React.FC<RepoCardProps> = ({ repo, onAnalyze, isAnalyzing
           disabled={isAnalyzing}
           className="flex items-center gap-2 text-sm font-bold text-black group-hover:translate-x-1 transition-transform disabled:opacity-50"
         >
-          {isAnalyzing ? 'Analyzing...' : 'Analyze Architecture'}
-          <ArrowRight size={16} />
+          {isAnalyzing ? (
+            <div className="flex items-center gap-2">
+              <Loader2 size={14} className="animate-spin" />
+              <span>Analyzing...</span>
+            </div>
+          ) : (
+            <>
+              Analyze Architecture
+              <ArrowRight size={16} />
+            </>
+          )}
         </button>
       </div>
     </motion.div>

@@ -33,55 +33,85 @@ export const geminiService = {
     });
   },
 
-  async analyzeRepository(uid: string, repoName: string, structure: any, keyFiles: { path: string, content: string }[], settings?: AISettings) {
+  async analyzeRepository(uid: string, repoName: string, structure: any, keyFiles: { path: string, content: string }[], settings?: AISettings, onProgress?: (msg: string) => void) {
     const canProceed = await this.checkUsage(uid, settings);
     if (!canProceed) throw new Error("Free tier limit reached ($1.00). Please provide your own API key in settings.");
 
     const provider = settings?.provider || 'gemini';
     const temperature = settings?.temperature ?? 0.7;
-    
-    // For now, we only implement Gemini as requested by the framework instructions
-    // But we use the user's key if provided
     const apiKey = (provider === 'gemini' && settings?.geminiKey) ? settings.geminiKey : DEFAULT_GEMINI_KEY;
     const ai = new GoogleGenAI({ apiKey });
     
-    const model = "gemini-3.1-pro-preview";
+    // Model Selection
+    let modelName = settings?.model || "gemini-3.1-pro-preview";
+    if (settings?.autoSelectModel) {
+      // Logic for auto-selecting model based on repo size or complexity
+      const fileCount = structure.tree.length;
+      modelName = fileCount > 500 ? "gemini-3.1-pro-preview" : "gemini-3.1-flash-preview";
+    }
+
+    onProgress?.("Planning analysis sub-tasks...");
     
-    const fileContents = keyFiles.map(f => `FILE: ${f.path}\nCONTENT:\n${f.content}`).join("\n\n---\n\n");
-    const tree = structure.tree.map((t: any) => t.path).join("\n");
+    // 1. Plan Sub-tasks
+    const planResponse = await ai.models.generateContent({
+      model: modelName,
+      contents: `You are a lead software architect. Break down the analysis of the repository "${repoName}" into 3-5 specific sub-tasks.
+      Repo Structure:
+      ${structure.tree.slice(0, 100).map((t: any) => t.path).join("\n")}
+      
+      Return a JSON array of tasks, each with a "title" and "description".`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              description: { type: Type.STRING }
+            },
+            required: ["title", "description"]
+          }
+        }
+      }
+    });
 
-    const prompt = `
-      Analyze the following repository structure and key file contents to generate a comprehensive system architecture documentation.
-      
-      REPOSITORY: ${repoName}
-      
-      FILE TREE:
-      ${tree}
-      
-      KEY FILE CONTENTS:
-      ${fileContents}
-      
-      Please provide:
-      1. A high-level summary of what the project does.
-      2. A detailed system architecture overview.
-      3. Key components and their responsibilities.
-      4. Data flow and interaction between components.
-      5. Technologies and libraries used.
-      6. A Mermaid diagram representing the architecture (if possible).
-      
-      Format the output in Markdown. Be professional and insightful.
-    `;
+    const tasks = JSON.parse(planResponse.text);
+    const results: string[] = [];
 
-    const response = await ai.models.generateContent({
-      model,
-      contents: prompt,
+    // 2. Execute Sub-tasks
+    for (const task of tasks) {
+      onProgress?.(`Executing: ${task.title}...`);
+      
+      const fileContents = keyFiles.map(f => `FILE: ${f.path}\nCONTENT:\n${f.content}`).join("\n\n---\n\n");
+      const tree = structure.tree.map((t: any) => t.path).join("\n");
+
+      const taskResponse = await ai.models.generateContent({
+        model: modelName,
+        contents: `TASK: ${task.title}\nDESCRIPTION: ${task.description}\n\nCONTEXT:\nRepo: ${repoName}\nTree:\n${tree}\n\nFiles:\n${fileContents}\n\nProvide a detailed analysis for this specific task.`,
+        config: { temperature }
+      });
+      
+      results.push(`## ${task.title}\n\n${taskResponse.text}`);
+      await this.updateUsage(uid, (tree.length + fileContents.length + taskResponse.text.length) / 4);
+    }
+
+    onProgress?.("Consolidating analysis...");
+
+    // 3. Consolidate
+    const finalResponse = await ai.models.generateContent({
+      model: modelName,
+      contents: `Consolidate the following sub-task analysis results into a single, professional system architecture documentation for "${repoName}".
+      Include a high-level summary, detailed components, data flow, and a Mermaid diagram.
+      
+      RESULTS:
+      ${results.join("\n\n")}`,
       config: { temperature }
     });
 
-    // Track usage (rough estimate of tokens)
-    await this.updateUsage(uid, prompt.length / 4 + response.text.length / 4);
+    await this.updateUsage(uid, (results.join("").length + finalResponse.text.length) / 4);
 
-    return response.text;
+    return finalResponse.text;
   },
 
   async chatAboutAnalysis(uid: string, analysisMarkdown: string, history: { role: string, content: string }[], newMessage: string, settings?: AISettings) {

@@ -22,6 +22,7 @@ export default function App() {
   const [repos, setRepos] = useState<Repository[]>([]);
   const [loadingRepos, setLoadingRepos] = useState(false);
   const [analyzingRepo, setAnalyzingRepo] = useState<string | null>(null);
+  const [analysisProgress, setAnalysisProgress] = useState<string>('');
   const [selectedAnalysis, setSelectedAnalysis] = useState<RepositoryAnalysis | null>(null);
   const [pastAnalyses, setPastAnalyses] = useState<RepositoryAnalysis[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -165,7 +166,8 @@ export default function App() {
         repo.name, 
         structure, 
         keyFiles, 
-        profile?.aiSettings
+        profile?.aiSettings,
+        (msg) => setAnalysisProgress(msg)
       );
 
       // 4. Store in Firestore
@@ -389,6 +391,22 @@ export default function App() {
         </AnimatePresence>
       </main>
 
+      {analyzingRepo && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-10 left-10 bg-black text-white p-6 rounded-[32px] shadow-2xl z-[60] flex items-center gap-4 border border-white/10 backdrop-blur-xl"
+        >
+          <div className="bg-white/10 p-3 rounded-2xl">
+            <Loader2 size={24} className="animate-spin" />
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Agent Task</p>
+            <p className="text-sm font-medium">{analysisProgress || 'Starting analysis...'}</p>
+          </div>
+        </motion.div>
+      )}
+
       {selectedAnalysis && (
         <ChatSidebar 
           messages={chatMessages} 
@@ -402,7 +420,13 @@ export default function App() {
       <SettingsModal 
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
-        settings={profile?.aiSettings || { provider: 'gemini', temperature: 0.7, maxTokens: 2048, rateLimit: 10 }}
+        settings={profile?.aiSettings || { 
+          provider: 'gemini', 
+          temperature: 0.7, 
+          maxTokens: 2048, 
+          rateLimit: 10,
+          autoSelectModel: true
+        }}
         onSave={handleSaveSettings}
       />
     </div>
