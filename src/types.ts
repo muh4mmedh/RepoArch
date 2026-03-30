@@ -1,9 +1,29 @@
+export type AIProvider = 'gemini' | 'openai' | 'anthropic';
+
+export interface AISettings {
+  provider: AIProvider;
+  geminiKey?: string;
+  openaiKey?: string;
+  anthropicKey?: string;
+  temperature: number;
+  maxTokens: number;
+  rateLimit: number;
+}
+
+export interface UsageStats {
+  totalCost: number;
+  requestCount: number;
+  lastReset: string;
+}
+
 export interface UserProfile {
   uid: string;
   displayName: string | null;
   email: string | null;
   githubAccessToken?: string;
   githubUsername?: string;
+  aiSettings?: AISettings;
+  usageStats?: UsageStats;
   createdAt: string;
 }
 

@@ -1,15 +1,16 @@
 import React from 'react';
-import { Github, LogOut, Layout, Database } from 'lucide-react';
+import { Github, LogOut, Layout, Database, Settings } from 'lucide-react';
 import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
 
 interface NavbarProps {
   user: any;
   onConnectGithub: () => void;
+  onOpenSettings: () => void;
   isGithubConnected: boolean;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ user, onConnectGithub, isGithubConnected }) => {
+export const Navbar: React.FC<NavbarProps> = ({ user, onConnectGithub, onOpenSettings, isGithubConnected }) => {
   return (
     <nav className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-50">
       <div className="flex items-center gap-2">
@@ -40,6 +41,13 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onConnectGithub, isGithubC
             <div className="h-8 w-px bg-gray-200 mx-2" />
             
             <div className="flex items-center gap-3">
+              <button 
+                onClick={onOpenSettings}
+                className="p-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-full transition-all"
+                title="AI Settings"
+              >
+                <Settings size={18} />
+              </button>
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold text-gray-900">{user.displayName}</p>
                 <p className="text-xs text-gray-500">{user.email}</p>

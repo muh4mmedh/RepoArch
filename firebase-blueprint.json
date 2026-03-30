@@ -2,7 +2,7 @@
   "entities": {
     "UserProfile": {
       "title": "User Profile",
-      "description": "Stores user information and GitHub connection status.",
+      "description": "Stores user information, GitHub connection, and AI provider settings.",
       "type": "object",
       "properties": {
         "uid": { "type": "string", "description": "Firebase Auth UID" },
@@ -10,6 +10,26 @@
         "email": { "type": "string" },
         "githubAccessToken": { "type": "string", "description": "Encrypted GitHub access token" },
         "githubUsername": { "type": "string" },
+        "aiSettings": {
+          "type": "object",
+          "properties": {
+            "provider": { "type": "string", "enum": ["gemini", "openai", "anthropic"] },
+            "geminiKey": { "type": "string" },
+            "openaiKey": { "type": "string" },
+            "anthropicKey": { "type": "string" },
+            "temperature": { "type": "number" },
+            "maxTokens": { "type": "number" },
+            "rateLimit": { "type": "number", "description": "Requests per minute" }
+          }
+        },
+        "usageStats": {
+          "type": "object",
+          "properties": {
+            "totalCost": { "type": "number" },
+            "requestCount": { "type": "number" },
+            "lastReset": { "type": "string", "format": "date-time" }
+          }
+        },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "createdAt"]

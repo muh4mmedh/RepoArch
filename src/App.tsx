@@ -10,8 +10,10 @@ import { RepoCard } from './components/RepoCard';
 import { AnalysisView } from './components/AnalysisView';
 import { ChatSidebar } from './components/ChatSidebar';
 import { Login } from './components/Login';
+import { SettingsModal } from './components/SettingsModal';
 import { Loader2, Search, Filter, History, Github, Database } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { AISettings } from './types';
 
 export default function App() {
   const [user, setUser] = useState<any>(null);
@@ -25,6 +27,7 @@ export default function App() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isChatTyping, setIsChatTyping] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -119,6 +122,16 @@ export default function App() {
     }
   };
 
+  const handleSaveSettings = async (newSettings: AISettings) => {
+    if (!user) return;
+    try {
+      await setDoc(doc(db, 'users', user.uid), { aiSettings: newSettings }, { merge: true });
+      setProfile(prev => prev ? { ...prev, aiSettings: newSettings } : null);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    }
+  };
+
   const handleAnalyze = async (repo: Repository) => {
     if (!profile?.githubAccessToken) return;
     setAnalyzingRepo(repo.full_name);
@@ -147,7 +160,13 @@ export default function App() {
       }));
 
       // 3. AI Analysis
-      const analysisMarkdown = await geminiService.analyzeRepository(repo.name, structure, keyFiles);
+      const analysisMarkdown = await geminiService.analyzeRepository(
+        user.uid, 
+        repo.name, 
+        structure, 
+        keyFiles, 
+        profile?.aiSettings
+      );
 
       // 4. Store in Firestore
       const analysisData = {
@@ -188,9 +207,11 @@ export default function App() {
     setIsChatTyping(true);
     try {
       const aiResponse = await geminiService.chatAboutAnalysis(
+        user.uid,
         selectedAnalysis.analysisMarkdown,
         chatMessages.map(m => ({ role: m.role, content: m.content })),
-        content
+        content,
+        profile?.aiSettings
       );
 
       const assistantMessage = {
@@ -231,6 +252,7 @@ export default function App() {
       <Navbar 
         user={user} 
         onConnectGithub={handleConnectGithub} 
+        onOpenSettings={() => setIsSettingsOpen(true)}
         isGithubConnected={!!profile?.githubAccessToken} 
       />
 
@@ -376,6 +398,13 @@ export default function App() {
           onToggle={() => setIsChatOpen(!isChatOpen)}
         />
       )}
+
+      <SettingsModal 
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        settings={profile?.aiSettings || { provider: 'gemini', temperature: 0.7, maxTokens: 2048, rateLimit: 10 }}
+        onSave={handleSaveSettings}
+      />
     </div>
   );
 }
