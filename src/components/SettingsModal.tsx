@@ -135,35 +135,67 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
               <section className="space-y-4">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold uppercase tracking-widest text-gray-400 block">API Keys</label>
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+                  <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
                     <Shield size={10} />
-                    <span>Encrypted Storage</span>
+                    <span>AES-256 Encrypted</span>
                   </div>
                 </div>
                 
-                <div className="space-y-3">
-                  <div className="relative">
-                    <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <input 
-                      type="password"
-                      placeholder={`${localSettings.provider.toUpperCase()} API Key`}
-                      value={
-                        localSettings.provider === 'gemini' ? localSettings.geminiKey || '' :
-                        localSettings.provider === 'openai' ? localSettings.openaiKey || '' :
-                        localSettings.anthropicKey || ''
-                      }
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (localSettings.provider === 'gemini') setLocalSettings({ ...localSettings, geminiKey: val });
-                        else if (localSettings.provider === 'openai') setLocalSettings({ ...localSettings, openaiKey: val });
-                        else setLocalSettings({ ...localSettings, anthropicKey: val });
-                      }}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
-                    />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">Gemini</span>
+                      {localSettings.geminiKey && <span className="text-[10px] text-emerald-500 font-bold">SAVED</span>}
+                    </div>
+                    <div className="relative">
+                      <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      <input 
+                        type="password"
+                        placeholder="Enter Gemini API Key"
+                        value={localSettings.geminiKey || ''}
+                        onChange={(e) => setLocalSettings({ ...localSettings, geminiKey: e.target.value })}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
+                      />
+                    </div>
                   </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">OpenAI</span>
+                      {localSettings.openaiKey && <span className="text-[10px] text-emerald-500 font-bold">SAVED</span>}
+                    </div>
+                    <div className="relative">
+                      <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      <input 
+                        type="password"
+                        placeholder="Enter OpenAI API Key"
+                        value={localSettings.openaiKey || ''}
+                        onChange={(e) => setLocalSettings({ ...localSettings, openaiKey: e.target.value })}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">Anthropic</span>
+                      {localSettings.anthropicKey && <span className="text-[10px] text-emerald-500 font-bold">SAVED</span>}
+                    </div>
+                    <div className="relative">
+                      <Key className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      <input 
+                        type="password"
+                        placeholder="Enter Anthropic API Key"
+                        value={localSettings.anthropicKey || ''}
+                        onChange={(e) => setLocalSettings({ ...localSettings, anthropicKey: e.target.value })}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
+                      />
+                    </div>
+                  </div>
+
                   <p className="text-[10px] text-gray-400 flex items-center gap-1">
                     <Info size={10} />
-                    Leave empty to use the app's shared key (limited usage).
+                    Keys are stored locally and encrypted before being synced to your profile.
                   </p>
                 </div>
               </section>
@@ -193,8 +225,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, s
                     <Zap className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input 
                       type="number"
+                      min="1"
+                      step="1"
                       value={localSettings.rateLimit}
-                      onChange={(e) => setLocalSettings({ ...localSettings, rateLimit: parseInt(e.target.value) || 1 })}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (val > 0) setLocalSettings({ ...localSettings, rateLimit: val });
+                      }}
                       className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
                     />
                   </div>

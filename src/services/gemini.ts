@@ -77,6 +77,10 @@ export const geminiService = {
     });
 
     const tasks = JSON.parse(planResponse.text);
+    
+    // Track usage for planning step
+    await this.updateUsage(uid, (structure.tree.length * 10 + planResponse.text.length) / 4);
+    
     const results: string[] = [];
 
     // 2. Execute Sub-tasks

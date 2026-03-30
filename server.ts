@@ -30,7 +30,8 @@ const decrypt = (ciphertext: string) => CryptoJS.AES.decrypt(ciphertext, ENCRYPT
 
 // GitHub OAuth Login
 app.get("/api/auth/github/login", (req, res) => {
-  const redirectUri = `${process.env.APP_URL}/api/auth/github/callback`;
+  const origin = process.env.APP_URL || `${req.protocol}://${req.get('host')}`;
+  const redirectUri = `${origin}/api/auth/github/callback`;
   const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${redirectUri}&scope=repo,user`;
   res.json({ url: githubAuthUrl });
 });
